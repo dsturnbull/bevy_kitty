@@ -1,0 +1,120 @@
+[package]
+name = "bevy_kitty"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+license = "Apache-2.0 OR MIT"
+description = "Render a Bevy 2D app into a terminal using the kitty graphics protocol"
+keywords = ["bevy", "terminal", "kitty", "graphics", "tui"]
+categories = ["game-development", "command-line-interface"]
+repository = "https://github.com/dsturnbull/bevy_kitty"
+homepage = "https://github.com/dsturnbull/bevy_kitty"
+readme = "README.md"
+
+# docs.rs builds with DEFAULT features, which would silently omit the `frame` module
+# (GPU readback) from the published documentation, so a reader would conclude the
+# mode does not exist. Build the docs with everything on instead.
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+# The placement renderer plus terminal input is what you want for a real
+# session, so it is the default. `text` is in the default set because a 2D game
+# without legible text is not playable, and `ui` because most Bevy apps build
+# their menus with bevy_ui rather than world-space sprites.
+default = ["sprite", "text", "ui", "input"]
+
+# Placement renderer: upload each distinct bitmap once, then send cheap
+# per-frame placements. The SSH-viable mode.
+sprite = []
+
+# Text2d glyph pass. Reuses Bevy's own font atlas, so it needs bevy_text.
+text = ["sprite"]
+
+# bevy_ui pass: node backgrounds, borders, outlines and images.
+#
+# Depends on `sprite` for the shared placement machinery (Geom, the solid-tile
+# convention, the image-label helper), not because UI needs world sprites.
+ui = ["sprite", "bevy/bevy_ui"]
+
+# Mouse and keyboard read from the terminal in raw mode.
+input = ["dep:crossterm"]
+
+# GPU readback mode: send the whole composited framebuffer each changed frame.
+# Faithful (it reproduces shaders) but ~307 KB per frame, so it is off by
+# default. Keep it available: it is the reference oracle to diff sprite mode
+# against, which is how several real bugs here were found.
+frame = []
+
+[dependencies]
+# Bevy, cut to what the renderer actually reads. `bevy_sprite` brings Sprite,
+# Anchor, TextureAtlas and the Text2d layout system; `bevy_text` brings the
+# glyph atlas (and switches on bevy_sprite's text2d module, verified in
+# bevy_internal 0.19 Cargo.toml: bevy_text = [..., "bevy_sprite?/bevy_text"]);
+# `bevy_render` is needed for TextureFormat/TextureUsages and, under the
+# `frame` feature, the gpu_readback plugin.
+#
+# `bevy_ui` is NOT listed here: the `ui` cargo feature switches it on, so a game
+# that draws only in world space does not pay for the UI machinery.
+#
+# Deliberately NOT enabled at all: bevy_winit, bevy_window, bevy_audio, bevy_pbr,
+# bevy_ui_render, any image-format decoder. This crate never opens a window, never
+# renders UI on the GPU, and decodes its own pixels via the `image` crate.
+bevy = { version = "0.19", default-features = false, features = [
+    "bevy_asset",
+    "bevy_camera",
+    "bevy_color",
+    "bevy_image",
+    "bevy_log",
+    "bevy_render",
+    "bevy_sprite",
+    "bevy_text",
+    "std",
+] }
+
+# Kitty graphics payloads are base64. Used only by `proto`, which is otherwise
+# dependency-free and Bevy-free.
+base64 = "0.22"
+
+# ioctl(TIOCGWINSZ) for the terminal's cell grid, and termios for the brief raw
+# mode the `CSI 14 t` pixel-size round trip needs. Used only by `term`.
+libc = "0.2"
+
+# Sprite pixels are read from disk: Bevy frees an image's CPU-side copy once it
+# is uploaded to the GPU, so `Assets<Image>` is empty for ordinary sprites.
+# Only the formats a 2D pixel-art game ships.
+image = { version = "0.25", default-features = false, features = ["png", "webp"] }
+
+# Terminal input, feature "input". Raw mode, SGR mouse reporting and key
+# decoding. We use only its event reader, not its rendering.
+#
+# Deliberately NOT depending on smol_str: bevy_input's `SmolStr` is an ALIAS that
+# is `smol_str::SmolStr` or plain `String` depending on ITS feature flags, so
+# naming either concrete type here would break under cargo feature unification.
+# `String::into()` covers both.
+crossterm = { version = "0.29", optional = true }
+
+# The examples are real apps, so they need the plugins a real app has: a windowing
+# plugin to DISABLE (WindowPlugin/WinitPlugin), the 2D render pipeline to actually
+# draw with, and the built-in font so `hello_text` needs no asset files.
+#
+# These are dev-dependencies on purpose. The library itself must never depend on
+# winit: a crate that renders to a terminal has no business pulling in a window
+# system, and doing so would break headless and remote builds.
+[dev-dependencies]
+bevy = { version = "0.19", default-features = false, features = [
+    "2d",
+    "bevy_asset",
+    "bevy_camera",
+    "bevy_color",
+    "bevy_image",
+    "bevy_log",
+    "bevy_render",
+    "bevy_sprite",
+    "bevy_text",
+    "bevy_ui",
+    "bevy_ui_render",
+    "bevy_winit",
+    "default_font",
+    "std",
+] }

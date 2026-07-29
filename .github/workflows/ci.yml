@@ -1,0 +1,75 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all --check
+
+  # One job per feature combination the manifest advertises, running BOTH clippy
+  # and the tests in each.
+  #
+  # Two separate bugs hid in the gaps here. The step that covered non-default
+  # builds was once a `cargo check`, which does not build test targets, so the
+  # test crate was never compiled without default features and had been broken
+  # for a while. And clippy only ran with `--all-features`, where nothing is
+  # gated out, so five `pub(crate)` helpers whose only callers are behind cargo
+  # features were never seen as dead code. Both were invisible while CI was
+  # green, which is why every combination now gets the full treatment rather
+  # than a cheaper subset.
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        features:
+          - ""
+          - "--all-features"
+          - "--no-default-features"
+          - "--no-default-features --features sprite"
+          - "--no-default-features --features sprite,text"
+          - "--no-default-features --features sprite,text,ui"
+          - "--no-default-features --features input"
+          - "--no-default-features --features frame"
+    name: ${{ matrix.features == '' && 'default features' || matrix.features }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.features }}
+
+      # Bevy needs alsa and udev headers to build on Linux, even though this
+      # crate enables neither audio nor gilrs: the dev-dependency pulls
+      # bevy_winit for the examples.
+      - name: Install Bevy's Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            libasound2-dev libudev-dev
+
+      # --all-targets so the examples and tests are linted too, not just the lib.
+      - name: Clippy
+        run: cargo clippy ${{ matrix.features }} --all-targets -- -D warnings
+
+      # Plain `cargo test`, so doctests run. `--no-run` and `--lib --tests` both
+      # skip them, and a doctest naming a feature-gated item is exactly the kind
+      # of thing this matrix exists to catch.
+      - name: Test
+        run: cargo test ${{ matrix.features }}
