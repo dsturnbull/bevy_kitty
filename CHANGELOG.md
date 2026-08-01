@@ -10,10 +10,25 @@ Extracted from the game it was written for into a standalone repository. No API
 changes were made during the move: the code, tests and examples are the same
 ones that were passing in-tree.
 
-## [0.1.0] - unreleased
+## [0.1.1] - 2026-08-01
 
-First shape of the crate. Not published to crates.io yet; see the maturity note
-in `README.md` for why.
+### Changed
+
+- CI: install `libwayland-dev` and `libxkbcommon-dev` system packages, which
+  are required to build the dev-dependency graph (bevy_winit → wayland-sys) on
+  Linux. All matrix jobs were failing at the clippy step without them.
+- CI: restructure the feature matrix to use comma-free cache keys, fixing a
+  `ValidationError` from `Swatinem/rust-cache` on multi-feature entries.
+
+### Added
+
+- The full `docs/bevy-to-kitty.md` architecture walkthrough is now inlined
+  into the crate-level rustdoc via `include_str!`, so docs.rs renders it with
+  all 11 figures and escape-sequence annotations.
+
+## [0.1.0] - 2026-07-30
+
+First published release.
 
 ### Added
 
