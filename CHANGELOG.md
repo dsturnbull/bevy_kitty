@@ -10,6 +10,12 @@ Extracted from the game it was written for into a standalone repository. No API
 changes were made during the move: the code, tests and examples are the same
 ones that were passing in-tree.
 
+## [0.1.2] - 2026-08-01
+
+### Added
+
+- Tag-triggered publish workflow (`.github/workflows/publish.yml`).
+
 ## [0.1.1] - 2026-08-01
 
 ### Changed
