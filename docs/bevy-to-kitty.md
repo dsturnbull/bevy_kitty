@@ -39,7 +39,7 @@ This is what has to come out of a terminal.
 
 ![A pixel-art game frame at 320 by 180: the crew quarters of a spaceship in blue
 tones, with bunk beds, ladders, a central door, two cats standing on the floor,
-and a line of dialogue in yellow and white text across the middle.](../docs/images/bevy-to-kitty/frame-mode-oracle.png)
+and a line of dialogue in yellow and white text across the middle.](https://raw.githubusercontent.com/dsturnbull/bevy_kitty/main/docs/images/bevy-to-kitty/frame-mode-oracle.png)
 
 *The anchor for everything below. Frame mode read this straight back off the GPU,
 so it is exactly what Bevy composited. Note what is in it: one large room
@@ -67,7 +67,7 @@ both reconstructed from the captured bytes rather than photographed off a screen
 ![Two versions of the same spaceship interior scene side by side. The left panel
 is frame mode's GPU readback. The right panel is the sprite-mode stream replayed:
 the same room, the same two cats in the same places, slightly brighter because the
-flat-colour overlays are missing.](../docs/images/bevy-to-kitty/sprite-mode-vs-oracle.png)
+flat-colour overlays are missing.](https://raw.githubusercontent.com/dsturnbull/bevy_kitty/main/docs/images/bevy-to-kitty/sprite-mode-vs-oracle.png)
 
 *Look at the cats: same pose, same position, same front-to-back order. Then look
 at the overall brightness, which is where the two diverge. Sprite mode cannot
@@ -132,7 +132,7 @@ where the game fills the whole area with only a 2 pixel margin at each side. The
 right panel is a squarer 100 by 50 terminal where the game occupies a horizontal
 band with thick grey bars above and below. Both have an amber outline around the
 game world and a sparse white grid showing terminal
-cells.](../docs/images/bevy-to-kitty/letterbox-two-terminals.png)
+cells.](https://raw.githubusercontent.com/dsturnbull/bevy_kitty/main/docs/images/bevy-to-kitty/letterbox-two-terminals.png)
 
 *Look at the grey bars. A 16:9 world in a 4:3 terminal letterboxes vertically, and
 the arithmetic under each panel is computed by the same formula the crate uses. The
@@ -153,7 +153,7 @@ bugs come out of it.
 terminal cell boundary drawn as a white line. The cells are visibly tall
 rectangles rather than squares. The top-left cell is outlined in cyan and
 dimensioned as 9 pixels wide by 21 pixels
-tall.](../docs/images/bevy-to-kitty/cell-grid-not-square.png)
+tall.](https://raw.githubusercontent.com/dsturnbull/bevy_kitty/main/docs/images/bevy-to-kitty/cell-grid-not-square.png)
 
 *The cell is more than twice as tall as it is wide. Every `c=` and `r=` in a
 placement quantises to this grid, so a rounding error on one axis is not the same
@@ -291,7 +291,7 @@ sheet at actual size with a grid over the 64 pixel cells and cell index 1 outlin
 in amber. Below, three enlarged panels: the cropped cell as a pale grey cat, the
 same cat multiplied by a warm brown tint, and the bytes actually sent to the
 terminal, which are identical to the tinted
-version.](../docs/images/bevy-to-kitty/sprite-atlas-to-upload.png)
+version.](https://raw.githubusercontent.com/dsturnbull/bevy_kitty/main/docs/images/bevy-to-kitty/sprite-atlas-to-upload.png)
 
 *Panels 2 and 3 are byte-identical, which the generator asserts rather than
 assumes: the third panel is decoded from the base64 the terminal received. The tint
@@ -347,7 +347,7 @@ amber rectangle 12 cells wide and 6 cells tall surrounds it, labelled as 108 by 
 terminal pixels from a 64 by 64 upload. Cyan leader lines run out to the margins
 marking the cursor cell at row 42 column 81, and the sub-cell offset of 1 pixel
 across and 9 pixels down into that
-cell.](../docs/images/bevy-to-kitty/sprite-placement-geometry.png)
+cell.](https://raw.githubusercontent.com/dsturnbull/bevy_kitty/main/docs/images/bevy-to-kitty/sprite-placement-geometry.png)
 
 *Each key in the escape sequence is one thing in the picture. `c` and `r` are the
 amber box, `X` and `Y` are the cyan offset into the first cell, and the cursor move
@@ -376,7 +376,7 @@ image id AND placement id both match, so instead of replacing, the four frames
 its image id, differing subtly in leg and tail position. Bottom left, outlined in
 red: all four composited at one position, producing a cat with a smeared tail and
 doubled legs. Bottom right, outlined in green: a single clean
-frame.](../docs/images/bevy-to-kitty/ghosting-reconstruction.png)
+frame.](https://raw.githubusercontent.com/dsturnbull/bevy_kitty/main/docs/images/bevy-to-kitty/ghosting-reconstruction.png)
 
 *Look at the tail and the front legs in the red panel. Every walk pose is present
 at once, which on a moving sprite reads as a smear trailing behind the cat. The four
@@ -434,7 +434,7 @@ white, blue and yellow characters, with obvious repeats absent. Bottom: the game
 character-select screen reconstructed from placements of those same 69 images,
 reading "FORGE YOUR PARTY", "Two cats. One arctic mystery.", "YOUR CAT", "YOUR
 COMPANION", and "BEGIN YOUR
-JOURNEY".](../docs/images/bevy-to-kitty/glyph-reuse.png)
+JOURNEY".](https://raw.githubusercontent.com/dsturnbull/bevy_kitty/main/docs/images/bevy-to-kitty/glyph-reuse.png)
 
 *The top sheet has each distinct image once. The bottom screen uses them 167 times.
 Every repeated letter in the same colour at the same size is a placement against an
@@ -462,7 +462,7 @@ to see than to describe:
 pixel size actually sent: the letters n, m, a and t read normally. The bottom row in
 red is the same letters rounded up to whole cells: n is unchanged, m is stretched
 sideways, and a and t are stretched to nearly twice their height into tall thin
-distortions.](../docs/images/bevy-to-kitty/glyph-cell-sizing.png)
+distortions.](https://raw.githubusercontent.com/dsturnbull/bevy_kitty/main/docs/images/bevy-to-kitty/glyph-cell-sizing.png)
 
 *Compare each red letter to the green one above it. The first column happens to land
 on the grid exactly. The others gain 20% width, or 91% height, or both at once by
@@ -503,7 +503,7 @@ each on a checkerboard showing transparency. The bottom panel holds the room
 background alone. The middle panel holds only the two cats and a few small props.
 The top panel holds only text: a speaker name and two lines of dialogue. Each panel
 is labelled with its z range and placement
-count.](../docs/images/bevy-to-kitty/z-stack.png)
+count.](https://raw.githubusercontent.com/dsturnbull/bevy_kitty/main/docs/images/bevy-to-kitty/z-stack.png)
 
 *Each panel is the placements from one z band and nothing else, so the checkerboard
 shows what each layer does not draw. The background is 13 placements at negative z,
@@ -601,7 +601,7 @@ are not the same kind of number at all.
 filled by uploaded pixels in blue, with a thin amber sliver of 140,696 ongoing bytes
 at the right end. The lower pair of bars compares steady-state rates on one scale: a
 tiny green bar at 10 KB/s for sprite mode against a full-width red bar at 1.8 MB/s
-for frame mode.](../docs/images/bevy-to-kitty/bandwidth-split.png)
+for frame mode.](https://raw.githubusercontent.com/dsturnbull/bevy_kitty/main/docs/images/bevy-to-kitty/bandwidth-split.png)
 
 *The amber sliver in the top bar is the part that repeats. Everything blue is paid
 once at startup and never again. The lower bars share one linear scale on purpose: a
