@@ -10,6 +10,13 @@ Extracted from the game it was written for into a standalone repository. No API
 changes were made during the move: the code, tests and examples are the same
 ones that were passing in-tree.
 
+## [0.1.3] - 2026-08-01
+
+### Fixed
+
+- Use absolute GitHub URLs for doc images so they render on docs.rs,
+  which does not serve static crate assets alongside rustdoc HTML.
+
 ## [0.1.2] - 2026-08-01
 
 ### Added
