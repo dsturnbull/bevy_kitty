@@ -79,6 +79,8 @@
 //! never corrupts the graphics stream. Never `println!` from a game using this
 //! crate.
 
+#![doc = include_str!("../docs/bevy-to-kitty.md")]
+
 use bevy::prelude::*;
 
 pub mod proto;

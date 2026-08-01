@@ -39,7 +39,7 @@ This is what has to come out of a terminal.
 
 ![A pixel-art game frame at 320 by 180: the crew quarters of a spaceship in blue
 tones, with bunk beds, ladders, a central door, two cats standing on the floor,
-and a line of dialogue in yellow and white text across the middle.](images/bevy-to-kitty/frame-mode-oracle.png)
+and a line of dialogue in yellow and white text across the middle.](../docs/images/bevy-to-kitty/frame-mode-oracle.png)
 
 *The anchor for everything below. Frame mode read this straight back off the GPU,
 so it is exactly what Bevy composited. Note what is in it: one large room
@@ -67,7 +67,7 @@ both reconstructed from the captured bytes rather than photographed off a screen
 ![Two versions of the same spaceship interior scene side by side. The left panel
 is frame mode's GPU readback. The right panel is the sprite-mode stream replayed:
 the same room, the same two cats in the same places, slightly brighter because the
-flat-colour overlays are missing.](images/bevy-to-kitty/sprite-mode-vs-oracle.png)
+flat-colour overlays are missing.](../docs/images/bevy-to-kitty/sprite-mode-vs-oracle.png)
 
 *Look at the cats: same pose, same position, same front-to-back order. Then look
 at the overall brightness, which is where the two diverge. Sprite mode cannot
@@ -83,7 +83,7 @@ same systems as the browser build and cannot drift from it.
 
 The renderer goes on top, and this is its entire required integration:
 
-```rust
+```rust,ignore
 app.add_plugins(KittyPlugin {
     config: KittyConfig { virtual_size: UVec2::new(320, 180), ..default() },
 });
@@ -93,7 +93,7 @@ commands.entity(camera).insert(KittyCamera);
 
 The camera is then pointed at an offscreen image rather than a window:
 
-```rust
+```rust,ignore
 // In bevy 0.19 RenderTarget is a COMPONENT the Camera requires, so inserting
 // our own overrides the default Window target.
 let mut target: ImageRenderTarget = handle.clone().into();
@@ -107,7 +107,7 @@ and with no window there would otherwise be no space to project into.
 
 From the real log, showing the hi-dpi trick explained in step 6:
 
-```
+```text
 [kitty] render target armed: 1280x720 physical at 4.0x, logical stays 320x180
 ```
 
@@ -115,7 +115,7 @@ From the real log, showing the hi-dpi trick explained in step 6:
 
 Everything downstream is sized from the terminal's pixel dimensions.
 
-```
+```text
 ioctl(TIOCGWINSZ)  ->  cols=212 rows=51  xpixel=1920 ypixel=1080
 ```
 
@@ -132,7 +132,7 @@ where the game fills the whole area with only a 2 pixel margin at each side. The
 right panel is a squarer 100 by 50 terminal where the game occupies a horizontal
 band with thick grey bars above and below. Both have an amber outline around the
 game world and a sparse white grid showing terminal
-cells.](images/bevy-to-kitty/letterbox-two-terminals.png)
+cells.](../docs/images/bevy-to-kitty/letterbox-two-terminals.png)
 
 *Look at the grey bars. A 16:9 world in a 4:3 terminal letterboxes vertically, and
 the arithmetic under each panel is computed by the same formula the crate uses. The
@@ -153,7 +153,7 @@ bugs come out of it.
 terminal cell boundary drawn as a white line. The cells are visibly tall
 rectangles rather than squares. The top-left cell is outlined in cyan and
 dimensioned as 9 pixels wide by 21 pixels
-tall.](images/bevy-to-kitty/cell-grid-not-square.png)
+tall.](../docs/images/bevy-to-kitty/cell-grid-not-square.png)
 
 *The cell is more than twice as tall as it is wide. Every `c=` and `r=` in a
 placement quantises to this grid, so a rounding error on one axis is not the same
@@ -169,7 +169,7 @@ extraction into the render world, no wgpu hook. It never touches the GPU path.
 It is two ordinary systems doing ordinary ECS queries. This is the whole
 interception:
 
-```rust
+```rust,ignore
 // bevy_kitty/src/sprite.rs, render_sprites
 sprites: Query<(Entity, &Sprite, &GlobalTransform, &ViewVisibility, Option<&Anchor>),
                Without<KittyCamera>>
@@ -189,7 +189,7 @@ rather than downstream of it. Three things make that work.
 **Timing.** Both systems run in `PostUpdate`, and the text one is explicitly
 ordered:
 
-```rust
+```rust,ignore
 app.add_systems(PostUpdate, render_sprites.in_set(KittySet::Render));
 app.add_systems(PostUpdate,
     render_glyphs.in_set(KittySet::Render)
@@ -270,7 +270,7 @@ one per (colour, size) pair.
 
 Take Artie standing in the crew quarters. In Bevy that entity is roughly:
 
-```rust
+```rust,ignore
 Sprite {
     image: Handle<Image>("sprites/peachgoma/artie_sheet.png"),
     texture_atlas: Some(TextureAtlas { layout, index: 1 }),  // walk frame 1
@@ -291,7 +291,7 @@ sheet at actual size with a grid over the 64 pixel cells and cell index 1 outlin
 in amber. Below, three enlarged panels: the cropped cell as a pale grey cat, the
 same cat multiplied by a warm brown tint, and the bytes actually sent to the
 terminal, which are identical to the tinted
-version.](images/bevy-to-kitty/sprite-atlas-to-upload.png)
+version.](../docs/images/bevy-to-kitty/sprite-atlas-to-upload.png)
 
 *Panels 2 and 3 are byte-identical, which the generator asserts rather than
 assumes: the third panel is decoded from the base64 the terminal received. The tint
@@ -312,14 +312,14 @@ about which sheet or which frame, and is long enough to bury the rest of the key
 Cache miss, so: crop cell 1 out of the sheet, multiply every pixel by the tint,
 and upload once. From the real log:
 
-```
+```text
 uploaded bitmap 'artie_sheet.png#1@db8f' (64x64) as img 1013
 ```
 
 On the wire, one upload (base64 pixels, chunked at 4096 bytes as the protocol
 requires):
 
-```
+```text
 ESC _ G a=t,f=32,s=64,v=64,i=1013,q=2 ,m=1 ; <base64 RGBA> ESC \
         │     │      │             │
         │     │      │             └─ quiet: no reply, so the game's stdin stays clean
@@ -331,7 +331,7 @@ ESC _ G a=t,f=32,s=64,v=64,i=1013,q=2 ,m=1 ; <base64 RGBA> ESC \
 Then every frame, place it. World position goes through the camera, then
 `FitBox`:
 
-```
+```text
 GlobalTransform (x, y, z)
   -> Camera::world_to_viewport  -> viewport px in 320x180 space
   -> minus half the draw size    -> top-left rather than centre
@@ -347,7 +347,7 @@ amber rectangle 12 cells wide and 6 cells tall surrounds it, labelled as 108 by 
 terminal pixels from a 64 by 64 upload. Cyan leader lines run out to the margins
 marking the cursor cell at row 42 column 81, and the sub-cell offset of 1 pixel
 across and 9 pixels down into that
-cell.](images/bevy-to-kitty/sprite-placement-geometry.png)
+cell.](../docs/images/bevy-to-kitty/sprite-placement-geometry.png)
 
 *Each key in the escape sequence is one thing in the picture. `c` and `r` are the
 amber box, `X` and `Y` are the cyan offset into the first cell, and the cursor move
@@ -376,7 +376,7 @@ image id AND placement id both match, so instead of replacing, the four frames
 its image id, differing subtly in leg and tail position. Bottom left, outlined in
 red: all four composited at one position, producing a cat with a smeared tail and
 doubled legs. Bottom right, outlined in green: a single clean
-frame.](images/bevy-to-kitty/ghosting-reconstruction.png)
+frame.](../docs/images/bevy-to-kitty/ghosting-reconstruction.png)
 
 *Look at the tail and the front legs in the red panel. Every walk pose is present
 at once, which on a moving sprite reads as a smear trailing behind the cat. The four
@@ -400,7 +400,7 @@ were uploaded and **zero** were re-uploaded.
 Text is the same idea, one letter at a time, and it reuses what Bevy already
 computed rather than rasterising anything.
 
-```
+```text
 Text2d ---(bevy's text systems)--> TextLayoutInfo {
              scale_factor,
              glyphs: [ PositionedGlyph { position, atlas_info { texture, rect }, section_index } ]
@@ -421,7 +421,7 @@ For each glyph the renderer:
 
 The reuse is the whole win. From the real log, one frame of the intro:
 
-```
+```text
 glyph scan #3: 14 text entities (0 invisible, 1 without laid-out glyphs), 167 glyphs total
 glyph tick #3: 167 (re)placements, 69 new glyph uploads, 176187 escape bytes, 69 glyph images cached, 167 live slots
 ```
@@ -434,7 +434,7 @@ white, blue and yellow characters, with obvious repeats absent. Bottom: the game
 character-select screen reconstructed from placements of those same 69 images,
 reading "FORGE YOUR PARTY", "Two cats. One arctic mystery.", "YOUR CAT", "YOUR
 COMPANION", and "BEGIN YOUR
-JOURNEY".](images/bevy-to-kitty/glyph-reuse.png)
+JOURNEY".](../docs/images/bevy-to-kitty/glyph-reuse.png)
 
 *The top sheet has each distinct image once. The bottom screen uses them 167 times.
 Every repeated letter in the same colour at the same size is a placement against an
@@ -442,14 +442,14 @@ image already on the terminal, so it costs about 50 bytes and no pixels.*
 
 A glyph upload looks like a small sprite upload:
 
-```
+```text
 ESC _ G a=t,f=32,s=24,v=19,i=100001,q=2 ,m=0 ; <base64> ESC \
                             ^^^^^^ glyphs live in the >=100_001 band
 ```
 
 and its placement omits `c`/`r` entirely:
 
-```
+```text
 ESC [ 28;37 H   ESC _ G a=p,i=100001,p=100001,z=5100000,C=1,q=2,X=7,Y=18 ESC \
                                                         ^^^^^^^ text sits above the world
 ```
@@ -462,7 +462,7 @@ to see than to describe:
 pixel size actually sent: the letters n, m, a and t read normally. The bottom row in
 red is the same letters rounded up to whole cells: n is unchanged, m is stretched
 sideways, and a and t are stretched to nearly twice their height into tall thin
-distortions.](images/bevy-to-kitty/glyph-cell-sizing.png)
+distortions.](../docs/images/bevy-to-kitty/glyph-cell-sizing.png)
 
 *Compare each red letter to the green one above it. The first column happens to land
 on the grid exactly. The others gain 20% width, or 91% height, or both at once by
@@ -491,7 +491,7 @@ first place. The target's pixel size is scaled by the same factor, so the
 kitty has a `z` key for stacking, so ordering is just a mapping. The catch is
 scale, and the multiplier is sized for it.
 
-```
+```text
 world z  ->  z * 100_000
 text     ->  z * 100_000 + 1_000_000    above the y-sort band
 ```
@@ -503,7 +503,7 @@ each on a checkerboard showing transparency. The bottom panel holds the room
 background alone. The middle panel holds only the two cats and a few small props.
 The top panel holds only text: a speaker name and two lines of dialogue. Each panel
 is labelled with its z range and placement
-count.](images/bevy-to-kitty/z-stack.png)
+count.](../docs/images/bevy-to-kitty/z-stack.png)
 
 *Each panel is the placements from one z band and nothing else, so the checkerboard
 shows what each layer does not draw. The background is 13 placements at negative z,
@@ -554,7 +554,7 @@ menu button and an "A" in a world label, at the same size and colour, are one up
 Measured on the crate's `chat_ui` example, a 21-node interface with panels, borders,
 chips and a message log:
 
-```
+```text
 ui tick #1: 21 nodes (0 invisible), 25 (re)placements, 5 new uploads, 1923 escape bytes
 glyph tick #1: 157 (re)placements, 82 new glyph uploads, 43263 escape bytes
 ui tick #2: 21 nodes (0 invisible), 0 (re)placements, 0 new uploads, 0 escape bytes
@@ -601,7 +601,7 @@ are not the same kind of number at all.
 filled by uploaded pixels in blue, with a thin amber sliver of 140,696 ongoing bytes
 at the right end. The lower pair of bars compares steady-state rates on one scale: a
 tiny green bar at 10 KB/s for sprite mode against a full-width red bar at 1.8 MB/s
-for frame mode.](images/bevy-to-kitty/bandwidth-split.png)
+for frame mode.](../docs/images/bevy-to-kitty/bandwidth-split.png)
 
 *The amber sliver in the top bar is the part that repeats. Everything blue is paid
 once at startup and never again. The lower bars share one linear scale on purpose: a
