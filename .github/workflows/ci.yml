@@ -34,16 +34,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        features:
-          - ""
-          - "--all-features"
-          - "--no-default-features"
-          - "--no-default-features --features sprite"
-          - "--no-default-features --features sprite,text"
-          - "--no-default-features --features sprite,text,ui"
-          - "--no-default-features --features input"
-          - "--no-default-features --features frame"
-    name: ${{ matrix.features == '' && 'default features' || matrix.features }}
+        include:
+          - label: default
+            flags: ""
+          - label: all-features
+            flags: "--all-features"
+          - label: no-default-features
+            flags: "--no-default-features"
+          - label: no-default-features-sprite
+            flags: "--no-default-features --features sprite"
+          - label: no-default-features-sprite-text
+            flags: "--no-default-features --features sprite,text"
+          - label: no-default-features-sprite-text-ui
+            flags: "--no-default-features --features sprite,text,ui"
+          - label: no-default-features-input
+            flags: "--no-default-features --features input"
+          - label: no-default-features-frame
+            flags: "--no-default-features --features frame"
+    name: ${{ matrix.label }}
     steps:
       - uses: actions/checkout@v4
 
@@ -53,7 +61,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ matrix.features }}
+          key: ${{ matrix.label }}
 
       # Bevy needs alsa and udev headers to build on Linux, even though this
       # crate enables neither audio nor gilrs: the dev-dependency pulls
@@ -62,14 +70,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y \
-            libasound2-dev libudev-dev
+            libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
 
       # --all-targets so the examples and tests are linted too, not just the lib.
       - name: Clippy
-        run: cargo clippy ${{ matrix.features }} --all-targets -- -D warnings
+        run: cargo clippy ${{ matrix.flags }} --all-targets -- -D warnings
 
       # Plain `cargo test`, so doctests run. `--no-run` and `--lib --tests` both
       # skip them, and a doctest naming a feature-gated item is exactly the kind
       # of thing this matrix exists to catch.
       - name: Test
-        run: cargo test ${{ matrix.features }}
+        run: cargo test ${{ matrix.flags }}
